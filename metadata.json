@@ -1,0 +1,6 @@
+{
+  "name": "Mi Agenda — Kotlin y Jetpack Compose",
+  "description": "Aplicación Android nativa de una sola pantalla con Kotlin y Jetpack Compose para gestionar actividades en memoria, con vista previa interactiva y guía de estructura para estudiantes.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
