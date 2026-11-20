@@ -15,6 +15,7 @@ import {
   getTodayDisplayDate,
   type Actividad,
   type ComposeSectionId,
+  type FiltroPrioridad,
   type WorkbenchTab,
 } from './types/agenda';
 
@@ -27,6 +28,7 @@ export default function App() {
     Prioridad.MEDIA
   );
   const [textoBusqueda, setTextoBusqueda] = useState('');
+  const [filtroPrioridad, setFiltroPrioridad] = useState<FiltroPrioridad>(null);
   const [actividadEnEdicion, setActividadEnEdicion] =
     useState<Actividad | null>(null);
   const [actividades, setActividades] = useState<Actividad[]>(() =>
@@ -160,6 +162,7 @@ export default function App() {
     setFechaIso('');
     setPrioridadSeleccionada(Prioridad.MEDIA);
     setTextoBusqueda('');
+    setFiltroPrioridad(null);
     setActividadEnEdicion(null);
     setSiguienteId(1);
     showSnackbar('Memoria reiniciada (sin base de datos)');
@@ -174,6 +177,7 @@ export default function App() {
     setFechaIso('');
     setPrioridadSeleccionada(Prioridad.MEDIA);
     setTextoBusqueda('');
+    setFiltroPrioridad(null);
     setActividadEnEdicion(null);
     showSnackbar('Ejemplos cargados');
   };
@@ -308,11 +312,11 @@ export default function App() {
         {/* ANDROID PHONE STAGE */}
         <main
           aria-label="Dispositivo Android con aplicación Mi Agenda"
-          className="flex flex-1 min-h-0 items-stretch min-[460px]:items-center justify-center min-[460px]:p-4 overflow-hidden"
+          className="flex flex-1 min-h-0 items-stretch min-[460px]:items-start justify-center min-[460px]:p-4 min-[460px]:overflow-y-auto overflow-hidden"
         >
           {/* Real smartphone (< 460px): full-bleed edge-to-edge.
-              Preview/Desktop (>= 460px): compact real Android phone dimensions (348px x 668px max) */}
-          <div className="relative flex flex-1 min-[460px]:flex-none w-full min-[460px]:w-[348px] min-[460px]:h-full min-[460px]:max-h-[668px] min-[460px]:rounded-[38px] min-[460px]:bg-[#181C1F] min-[460px]:p-[9px] min-[460px]:shadow-[0_22px_50px_-18px_rgba(15,23,42,0.38)]">
+              Preview/Desktop (>= 460px): tall Android phone dimensions (348px x 760px) */}
+          <div className="relative flex flex-1 min-[460px]:flex-none w-full min-[460px]:w-[348px] min-[460px]:h-[760px] min-[460px]:shrink-0 min-[460px]:my-auto min-[460px]:rounded-[38px] min-[460px]:bg-[#181C1F] min-[460px]:p-[9px] min-[460px]:shadow-[0_22px_50px_-18px_rgba(15,23,42,0.38)]">
             {/* Android Hardware Buttons (Framed shell only) */}
             <div
               aria-hidden="true"
@@ -323,7 +327,7 @@ export default function App() {
               className="hidden min-[460px]:block absolute -right-[2.5px] top-36 h-16 w-[2.5px] rounded-r bg-[#2E353A]"
             />
 
-            {/* Inner Android Screen Viewport (~330px x 650px real phone size) */}
+            {/* Inner Android Screen Viewport (~330px x 742px tall Android phone screen) */}
             <div className="relative flex flex-1 min-h-0 w-full flex-col overflow-hidden min-[460px]:rounded-[30px] bg-[#F4FBF9]">
               <AndroidPhonePreview
                 actividades={actividades}
@@ -332,6 +336,7 @@ export default function App() {
                 fechaIso={fechaIso}
                 prioridadSeleccionada={prioridadSeleccionada}
                 textoBusqueda={textoBusqueda}
+                filtroPrioridad={filtroPrioridad}
                 actividadEnEdicion={actividadEnEdicion}
                 snackbarMessage={snackbarMessage}
                 canUndoDelete={lastDeleted !== null}
@@ -340,6 +345,7 @@ export default function App() {
                 onFechaChange={setFechaIso}
                 onPrioridadChange={setPrioridadSeleccionada}
                 onBusquedaChange={setTextoBusqueda}
+                onFiltroPrioridadChange={setFiltroPrioridad}
                 onAgregarActividad={handleAgregarActividad}
                 onToggleActividad={handleToggleActividad}
                 onIniciarEdicion={setActividadEnEdicion}
@@ -458,6 +464,7 @@ export default function App() {
                     fechaIso={fechaIso}
                     prioridadSeleccionada={prioridadSeleccionada}
                     textoBusqueda={textoBusqueda}
+                    filtroPrioridad={filtroPrioridad}
                     actividadEnEdicion={actividadEnEdicion}
                     siguienteId={siguienteId}
                     actividades={actividades}

@@ -3,6 +3,7 @@ import {
   formatIsoToDisplayDate,
   getTodayDisplayDate,
   type Actividad,
+  type FiltroPrioridad,
 } from '../types/agenda';
 
 interface MemoryStatePanelProps {
@@ -11,6 +12,7 @@ interface MemoryStatePanelProps {
   fechaIso: string;
   prioridadSeleccionada: Prioridad;
   textoBusqueda: string;
+  filtroPrioridad: FiltroPrioridad;
   actividadEnEdicion: Actividad | null;
   siguienteId: number;
   actividades: Actividad[];
@@ -34,6 +36,7 @@ export function MemoryStatePanel({
   fechaIso,
   prioridadSeleccionada,
   textoBusqueda,
+  filtroPrioridad,
   actividadEnEdicion,
   siguienteId,
   actividades,
@@ -42,9 +45,13 @@ export function MemoryStatePanel({
   const completadas = actividades.filter((a) => a.completada).length;
   const porcentaje = total > 0 ? Math.round((completadas / total) * 100) : 0;
   const consulta = textoBusqueda.trim().toLowerCase();
-  const filtradasCount = consulta
-    ? actividades.filter((a) => a.titulo.toLowerCase().includes(consulta)).length
-    : total;
+  const filtradasCount = actividades.filter((a) => {
+    const coincideTexto =
+      !consulta || a.titulo.toLowerCase().includes(consulta);
+    const coincidePrioridad =
+      filtroPrioridad === null || a.prioridad === filtroPrioridad;
+    return coincideTexto && coincidePrioridad;
+  }).length;
 
   const fechaDisplay = fechaIso
     ? `"${formatIsoToDisplayDate(fechaIso)}"`
@@ -77,7 +84,7 @@ export function MemoryStatePanel({
           </div>
         </div>
         <div className="px-4 sm:px-5 py-3.5">
-          <div className="text-xs text-slate-500">Visibles por búsqueda</div>
+          <div className="text-xs text-slate-500">Visibles por filtro</div>
           <div className="mt-0.5 font-display text-2xl font-bold text-slate-900 tabular-nums">
             {filtradasCount}
           </div>
@@ -117,6 +124,26 @@ export function MemoryStatePanel({
           </div>
           <code className="font-mono text-[12.5px] text-slate-900 bg-slate-100 px-2.5 py-1 rounded-md break-all">
             &quot;{textoBusqueda}&quot;
+          </code>
+        </div>
+
+        <div className="py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <div>
+            <code className="font-mono text-[13px] font-medium text-[#006A60]">
+              filtroPrioridad
+            </code>
+            <p className="text-xs text-slate-500 mt-0.5">
+              mutableStateOf&lt;Prioridad?&gt;(null) · null muestra Todas
+            </p>
+          </div>
+          <code
+            className={`font-mono text-[12.5px] font-medium bg-slate-100 px-2.5 py-1 rounded-md ${
+              filtroPrioridad ? PRIORITY_COLORS[filtroPrioridad] : 'text-[#006A60]'
+            }`}
+          >
+            {filtroPrioridad
+              ? PRIORITY_ENUM_NAME[filtroPrioridad]
+              : 'null (Todas)'}
           </code>
         </div>
 

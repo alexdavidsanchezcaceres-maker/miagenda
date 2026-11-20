@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import {
+  FILTROS_PRIORIDAD,
   PRIORIDADES,
   Prioridad,
   displayDateToIso,
@@ -19,6 +20,7 @@ import {
   getTodayIsoDate,
   type Actividad,
   type ComposeSectionId,
+  type FiltroPrioridad,
 } from '../types/agenda';
 import { AndroidDatePickerDialog } from './AndroidDatePickerDialog';
 
@@ -29,6 +31,7 @@ interface AndroidPhonePreviewProps {
   fechaIso: string;
   prioridadSeleccionada: Prioridad;
   textoBusqueda: string;
+  filtroPrioridad: FiltroPrioridad;
   actividadEnEdicion: Actividad | null;
   snackbarMessage: string | null;
   canUndoDelete: boolean;
@@ -37,6 +40,7 @@ interface AndroidPhonePreviewProps {
   onFechaChange: (isoDate: string) => void;
   onPrioridadChange: (prioridad: Prioridad) => void;
   onBusquedaChange: (consulta: string) => void;
+  onFiltroPrioridadChange: (filtro: FiltroPrioridad) => void;
   onAgregarActividad: () => boolean;
   onToggleActividad: (id: number) => void;
   onIniciarEdicion: (actividad: Actividad) => void;
@@ -87,6 +91,7 @@ export function AndroidPhonePreview({
   fechaIso,
   prioridadSeleccionada,
   textoBusqueda,
+  filtroPrioridad,
   actividadEnEdicion,
   snackbarMessage,
   canUndoDelete,
@@ -95,6 +100,7 @@ export function AndroidPhonePreview({
   onFechaChange,
   onPrioridadChange,
   onBusquedaChange,
+  onFiltroPrioridadChange,
   onAgregarActividad,
   onToggleActividad,
   onIniciarEdicion,
@@ -169,11 +175,16 @@ export function AndroidPhonePreview({
     ringCircumference - (porcentajeCompletado / 100) * ringCircumference;
 
   const consultaLimpia = textoBusqueda.trim();
-  const actividadesFiltradas = consultaLimpia
-    ? actividades.filter((a) =>
-        a.titulo.toLowerCase().includes(consultaLimpia.toLowerCase())
-      )
-    : actividades;
+  const hayFiltrosActivos =
+    consultaLimpia.length > 0 || filtroPrioridad !== null;
+  const actividadesFiltradas = actividades.filter((a) => {
+    const coincideTexto =
+      consultaLimpia.length === 0 ||
+      a.titulo.toLowerCase().includes(consultaLimpia.toLowerCase());
+    const coincidePrioridad =
+      filtroPrioridad === null || a.prioridad === filtroPrioridad;
+    return coincideTexto && coincidePrioridad;
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -627,10 +638,68 @@ export function AndroidPhonePreview({
               </button>
             )}
           </div>
-          {consultaLimpia.length > 0 && actividades.length > 0 && (
-            <p className="mt-1 px-2 text-[11px] text-[#525E5B] tabular-nums">
+        </div>
+
+        {/* ANDROID MATERIAL 3 PRIORITY FILTER CHIPS (Todas, Alta, Media, Baja) */}
+        <div
+          onClick={() => isClickableLayer && onSelectSection('priorityFilter')}
+          className={`relative shrink-0 rounded-xl transition-all duration-150 ${
+            isHighlighted('priorityFilter') || isHighlighted('state')
+              ? 'ring-2 ring-[#006A60] ring-offset-2 ring-offset-[#F4FBF9] p-1'
+              : inspectorMode
+                ? 'ring-1 ring-dashed ring-[#006A60]/60 p-1'
+                : ''
+          }`}
+        >
+          {(inspectorMode || isHighlighted('priorityFilter')) && (
+            <span className="pointer-events-none absolute -top-2.5 right-2 z-10 rounded bg-[#006A60] px-1.5 py-0.5 font-mono text-[9px] font-medium text-white">
+              FilterChips
+            </span>
+          )}
+          <div
+            role="group"
+            aria-label="Filtrar actividades por prioridad"
+            className="grid grid-cols-4 gap-1.5"
+          >
+            {FILTROS_PRIORIDAD.map(({ valor, etiqueta }) => {
+              const selected = filtroPrioridad === valor;
+              const activeClasses =
+                valor === null
+                  ? 'border-transparent bg-[#CCE8E3] text-[#00201D] font-semibold'
+                  : PRIORITY_CHIP_STYLES[valor].active;
+              const inactiveClasses =
+                'border-[#747775]/55 bg-white/80 text-[#3F4947] hover:bg-[#006A60]/5';
+
+              return (
+                <button
+                  key={etiqueta}
+                  type="button"
+                  aria-pressed={selected}
+                  onClick={(e) => {
+                    if (isClickableLayer) {
+                      e.stopPropagation();
+                      onSelectSection('priorityFilter');
+                      return;
+                    }
+                    onFiltroPrioridadChange(valor);
+                  }}
+                  className={`flex min-h-[34px] items-center justify-center gap-1 rounded-[8px] border px-1.5 py-1 text-[11.5px] whitespace-nowrap transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#006A60] ${
+                    selected ? activeClasses : inactiveClasses
+                  }`}
+                >
+                  {selected && (
+                    <Check className="h-3 w-3 stroke-[2.5] shrink-0" />
+                  )}
+                  <span>{etiqueta}</span>
+                </button>
+              );
+            })}
+          </div>
+          {hayFiltrosActivos && actividades.length > 0 && (
+            <p className="mt-1.5 px-1 text-[11px] text-[#525E5B] tabular-nums">
               Mostrando {actividadesFiltradas.length} de {actividades.length}{' '}
               {actividades.length === 1 ? 'actividad' : 'actividades'}
+              {filtroPrioridad ? ` · Prioridad ${filtroPrioridad}` : ''}
             </p>
           )}
         </div>
@@ -677,14 +746,21 @@ export function AndroidPhonePreview({
           ) : actividadesFiltradas.length === 0 ? (
             <div className="flex min-h-[100px] flex-col items-center justify-center px-4 py-5 text-center">
               <p className="text-[13px] font-medium text-[#3F4947]">
-                Sin resultados para &ldquo;{consultaLimpia}&rdquo;
+                {consultaLimpia && filtroPrioridad
+                  ? `Sin actividades de prioridad ${filtroPrioridad} para “${consultaLimpia}”`
+                  : filtroPrioridad
+                    ? `No hay actividades con prioridad ${filtroPrioridad}`
+                    : `Sin resultados para “${consultaLimpia}”`}
               </p>
               <button
                 type="button"
-                onClick={() => onBusquedaChange('')}
+                onClick={() => {
+                  onBusquedaChange('');
+                  onFiltroPrioridadChange(null);
+                }}
                 className="mt-1.5 min-h-[36px] rounded-full px-3.5 py-1.5 text-[11.5px] font-medium text-[#006A60] hover:bg-[#006A60]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#006A60]"
               >
-                Limpiar búsqueda
+                {filtroPrioridad ? 'Limpiar filtros' : 'Limpiar búsqueda'}
               </button>
             </div>
           ) : (

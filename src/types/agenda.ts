@@ -10,6 +10,18 @@ export const PRIORIDADES: Prioridad[] = [
   Prioridad.ALTA,
 ];
 
+export type FiltroPrioridad = Prioridad | null;
+
+export const FILTROS_PRIORIDAD: Array<{
+  valor: FiltroPrioridad;
+  etiqueta: string;
+}> = [
+  { valor: null, etiqueta: 'Todas' },
+  { valor: Prioridad.ALTA, etiqueta: Prioridad.ALTA },
+  { valor: Prioridad.MEDIA, etiqueta: Prioridad.MEDIA },
+  { valor: Prioridad.BAJA, etiqueta: Prioridad.BAJA },
+];
+
 export interface Actividad {
   id: number;
   titulo: string;
@@ -28,6 +40,7 @@ export type ComposeSectionId =
   | 'button'
   | 'summary'
   | 'search'
+  | 'priorityFilter'
   | 'list'
   | 'item'
   | 'edit';
@@ -109,7 +122,7 @@ export const SCREEN_SECTIONS: ScreenSectionMeta[] = [
     composable: 'remember + mutableStateListOf',
     roleTitle: 'Estado temporal en memoria',
     description:
-      'Conserva el formulario, la búsqueda en tiempo real, la actividad en edición y la lista de actividades solo mientras la app está abierta.',
+      'Conserva el formulario, la búsqueda en tiempo real, el filtro de prioridad, la actividad en edición y la lista de actividades solo mientras la app está abierta.',
     indentLevel: 0,
     startMarker: '// Estado en memoria:',
     endMarker: 'val actividades = remember',
@@ -203,8 +216,19 @@ export const SCREEN_SECTIONS: ScreenSectionMeta[] = [
     endMarker: 'singleLine = true,',
   },
   {
-    id: 'list',
+    id: 'priorityFilter',
     order: '10',
+    composable: 'FilterChip (Filtro de lista)',
+    roleTitle: 'Chips de filtro por prioridad',
+    description:
+      'Permite filtrar las actividades visibles por prioridad (Todas, Alta, Media, Baja) combinándose con la barra de búsqueda.',
+    indentLevel: 1,
+    startMarker: '// Selector de filtros por prioridad',
+    endMarker: 'modifier = Modifier.weight(1f)',
+  },
+  {
+    id: 'list',
+    order: '11',
     composable: 'LazyColumn',
     roleTitle: 'Lista desplazable de tareas',
     description:
@@ -215,7 +239,7 @@ export const SCREEN_SECTIONS: ScreenSectionMeta[] = [
   },
   {
     id: 'item',
-    order: '11',
+    order: '12',
     composable: 'ActividadItem (Row)',
     roleTitle: 'Completar, fecha, prioridad, editar y eliminar',
     description:
@@ -226,7 +250,7 @@ export const SCREEN_SECTIONS: ScreenSectionMeta[] = [
   },
   {
     id: 'edit',
-    order: '12',
+    order: '13',
     composable: 'EditarActividadDialog',
     roleTitle: 'Formulario para editar nombre y fecha',
     description:

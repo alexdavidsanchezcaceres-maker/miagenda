@@ -141,6 +141,7 @@ fun MiAgendaScreen() {
     var mostrarSelectorFecha by remember { mutableStateOf(false) }
     var prioridadSeleccionada by remember { mutableStateOf(Prioridad.MEDIA) }
     var textoBusqueda by remember { mutableStateOf("") }
+    var filtroPrioridad by remember { mutableStateOf<Prioridad?>(null) }
     var actividadEnEdicion by remember { mutableStateOf<Actividad?>(null) }
     var siguienteId by remember { mutableStateOf(1) }
     val actividades = remember { mutableStateListOf<Actividad>() }
@@ -157,12 +158,14 @@ fun MiAgendaScreen() {
         0
     }
 
-    // Filtrado en tiempo real por nombre
+    // Filtrado en tiempo real por nombre y por prioridad
     val consultaLimpia = textoBusqueda.trim()
-    val actividadesFiltradas = if (consultaLimpia.isEmpty()) {
-        actividades
-    } else {
-        actividades.filter { it.titulo.contains(consultaLimpia, ignoreCase = true) }
+    val actividadesFiltradas = actividades.filter { actividad ->
+        val coincideTexto = consultaLimpia.isEmpty() ||
+            actividad.titulo.contains(consultaLimpia, ignoreCase = true)
+        val coincidePrioridad = filtroPrioridad == null ||
+            actividad.prioridad == filtroPrioridad
+        coincideTexto && coincidePrioridad
     }
 
     // Valida el campo de texto y agrega la actividad con su fecha y prioridad
@@ -379,6 +382,54 @@ fun MiAgendaScreen() {
                 )
             }
 
+            // Selector de filtros por prioridad (Todas, Alta, Media, Baja)
+            item {
+                val opcionesFiltro = listOf(
+                    null to "Todas",
+                    Prioridad.ALTA to Prioridad.ALTA.etiqueta,
+                    Prioridad.MEDIA to Prioridad.MEDIA.etiqueta,
+                    Prioridad.BAJA to Prioridad.BAJA.etiqueta
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    opcionesFiltro.forEach { (nivel, etiqueta) ->
+                        val seleccionado = filtroPrioridad == nivel
+                        val colorActivo = if (nivel == null) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            colorDePrioridad(nivel)
+                        }
+                        FilterChip(
+                            selected = seleccionado,
+                            onClick = { filtroPrioridad = nivel },
+                            label = {
+                                Text(
+                                    text = etiqueta,
+                                    maxLines = 1,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    textAlign = TextAlign.Center
+                                )
+                            },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = if (nivel == null) {
+                                    MaterialTheme.colorScheme.primaryContainer
+                                } else {
+                                    colorActivo.copy(alpha = 0.14f)
+                                },
+                                selectedLabelColor = if (nivel == null) {
+                                    MaterialTheme.colorScheme.onPrimaryContainer
+                                } else {
+                                    colorActivo
+                                }
+                            ),
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+            }
+
             // Lista de actividades filtradas o mensaje vacío
             if (actividades.isEmpty()) {
                 item {
@@ -398,18 +449,36 @@ fun MiAgendaScreen() {
                 }
             } else if (actividadesFiltradas.isEmpty()) {
                 item {
-                    Box(
+                    val prioridadActiva = filtroPrioridad
+                    val mensajeSinResultados = when {
+                        consultaLimpia.isNotEmpty() && prioridadActiva != null ->
+                            "No hay actividades de prioridad ${prioridadActiva.etiqueta} con \"$consultaLimpia\"."
+                        prioridadActiva != null ->
+                            "No hay actividades con prioridad ${prioridadActiva.etiqueta}."
+                        else ->
+                            "No se encontraron actividades con \"$consultaLimpia\"."
+                    }
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(vertical = 24.dp),
-                        contentAlignment = Alignment.Center
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Text(
-                            text = "No se encontraron actividades con \"$consultaLimpia\".",
+                            text = mensajeSinResultados,
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center
                         )
+                        TextButton(
+                            onClick = {
+                                textoBusqueda = ""
+                                filtroPrioridad = null
+                            }
+                        ) {
+                            Text("Limpiar filtros")
+                        }
                     }
                 }
             } else {
